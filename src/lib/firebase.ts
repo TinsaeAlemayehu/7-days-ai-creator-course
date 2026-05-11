@@ -2,9 +2,15 @@ import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Static environment config mapping
-const getEnvConfig = () => {
-  const config = {
+// @ts-ignore - This file is locally generated in AI Studio
+import firebaseConfigJSON from '../../firebase-applet-config.json';
+
+const getFirebaseConfig = () => {
+  // Start with the local JSON config as base
+  const config = (firebaseConfigJSON && firebaseConfigJSON.apiKey) ? { ...firebaseConfigJSON } : {} as any;
+
+  // Layer environment variables on top
+  const envMapping: Record<string, string | undefined> = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -13,29 +19,51 @@ const getEnvConfig = () => {
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
     firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID
   };
+
+  Object.entries(envMapping).forEach(([key, value]) => {
+    // Check if value is a non-empty string and not a placeholder
+    if (value && value !== "" && value !== "undefined") {
+      config[key] = value;
+    }
+  });
+
+  // Verify critical fields for Auth
+  const missingFields = [];
+  if (!config.apiKey) missingFields.push('apiKey');
+  if (!config.authDomain) missingFields.push('authDomain');
+  if (!config.projectId) missingFields.push('projectId');
+
+  if (missingFields.length > 0 && import.meta.env.PROD) {
+    console.error(`Firebase configuration is missing required fields: ${missingFields.join(', ')}. Login will likely fail.`);
+  }
+
   return config.apiKey ? config : null;
 };
 
 // We will try to resolve the app instance synchronously if possible
 const initialize = () => {
-  if (getApps().length) return getApp();
-
-  const envConfig = getEnvConfig();
-  if (envConfig) {
-    return initializeApp(envConfig);
-  }
-
-  // If no env vars, we might be in AI studio or dev, we'll try a minimal init 
-  // and handle real config loading in the AuthProvider lazily if needed.
   try {
-    return initializeApp({ apiKey: "pending", projectId: "pending" });
+    if (getApps().length) return getApp();
+
+    const config = getFirebaseConfig();
+    if (config && config.apiKey && config.apiKey !== "missing") {
+      return initializeApp(config);
+    }
   } catch (e) {
-    return getApp();
+    console.error("Firebase Initialization Critical Error:", e);
   }
+
+  // Fallback/Placeholder app to prevent module-level crash
+  return initializeApp({ 
+    apiKey: "missing", 
+    projectId: "missing",
+    authDomain: "missing.firebaseapp.com" // Provide a mock authDomain to avoid auth-domain-config-required
+  }, "placeholder");
 };
 
 export const app = initialize();
-export const db = getFirestore(app, (getEnvConfig() as any)?.firestoreDatabaseId || '(default)');
+const finalConfig = getFirebaseConfig();
+export const db = getFirestore(app, finalConfig?.firestoreDatabaseId || '(default)');
 export const auth = getAuth(app);
 
 // Helper to update config if JSON is loaded later (AI Studio specific)

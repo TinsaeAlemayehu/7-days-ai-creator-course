@@ -28,8 +28,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         await getDocFromServer(doc(db, 'test', 'connection'));
       } catch (error) {
-        if (error instanceof Error && error.message.includes('the client is offline')) {
-          console.error("Please check your Firebase configuration.");
+        console.warn("Firebase connection test result:", error);
+        if (error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('permission-denied'))) {
+          // permission-denied is actually a GOOD sign that we contacted the server
+          if (error.message.includes('the client is offline')) {
+            console.error("Please check your Firebase configuration.");
+          }
         }
       }
     }
