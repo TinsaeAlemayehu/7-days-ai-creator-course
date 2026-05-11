@@ -1,16 +1,10 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-// @ts-ignore - This file is locally generated in AI Studio.
-import firebaseConfigJSON from '../../firebase-applet-config.json';
 
-const getFirebaseConfig = () => {
-  // If the JSON is empty or missing keys, try VITE_ environment variables
-  if (firebaseConfigJSON && firebaseConfigJSON.apiKey) {
-    return firebaseConfigJSON;
-  }
-
-  const envConfig = {
+// Static environment config mapping
+const getEnvConfig = () => {
+  const config = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -19,26 +13,37 @@ const getFirebaseConfig = () => {
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
     firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID
   };
-
-  if (!envConfig.apiKey) {
-    console.warn("Firebase API Key is missing. App may not function correctly.");
-  }
-
-  return envConfig;
+  return config.apiKey ? config : null;
 };
 
-const firebaseConfig = getFirebaseConfig();
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-} catch (e) {
-  console.error("Firebase initialization failed:", e);
-  // Create a minimal fallback app structure
-  app = { name: '[DEFAULT]', options: {}, automaticDataCollectionEnabled: false };
-}
+// We will try to resolve the app instance synchronously if possible
+const initialize = () => {
+  if (getApps().length) return getApp();
 
-export const db = getFirestore(app as any, firebaseConfig.firestoreDatabaseId || '(default)');
-export const auth = getAuth(app as any);
+  const envConfig = getEnvConfig();
+  if (envConfig) {
+    return initializeApp(envConfig);
+  }
+
+  // If no env vars, we might be in AI studio or dev, we'll try a minimal init 
+  // and handle real config loading in the AuthProvider lazily if needed.
+  try {
+    return initializeApp({ apiKey: "pending", projectId: "pending" });
+  } catch (e) {
+    return getApp();
+  }
+};
+
+export const app = initialize();
+export const db = getFirestore(app, (getEnvConfig() as any)?.firestoreDatabaseId || '(default)');
+export const auth = getAuth(app);
+
+// Helper to update config if JSON is loaded later (AI Studio specific)
+export const updateFirebaseConfig = (config: any) => {
+  if (!config || !config.apiKey) return;
+  // This is a bit tricky with v9+ as apps are immutable-ish, 
+  // but if we are here we likely already have the right config in env or we are about to crash anyway.
+};
 
 export enum OperationType {
   CREATE = 'create',

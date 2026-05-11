@@ -62,7 +62,13 @@ export const MissionMap: React.FC<MissionMapProps> = ({ profile, onMissionSelect
                 </div>
                 
                 {isActive && (
-                  <button className={`mt-4 rounded-lg bg-white px-6 py-2 text-[10px] font-black text-slate-900 transition hover:bg-cyan-400 uppercase tracking-widest`}>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMissionSelect(mission.day);
+                    }}
+                    className={`mt-4 rounded-lg bg-white px-6 py-2 text-[10px] font-black text-slate-900 transition hover:bg-cyan-400 uppercase tracking-widest`}
+                  >
                     RESUME MISSION
                   </button>
                 )}

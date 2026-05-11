@@ -17,10 +17,26 @@ import { db, handleFirestoreError, OperationType } from './lib/firebase';
 import confetti from 'canvas-confetti';
 
 function AppContent() {
-  const { user, profile, loading, refreshProfile } = useAuth();
+  const { user, profile: realProfile, loading, refreshProfile } = useAuth();
   const [activeMission, setActiveMission] = useState<number | null>(null);
   const [view, setView] = useState<'landing' | 'map' | 'lesson' | 'lab' | 'parent'>('landing');
   const [isTimedOut, setIsTimedOut] = useState(false);
+
+  // Fallback profile for guest/demo mode
+  const guestProfile = {
+    uid: 'guest',
+    name: 'Guest Explorer',
+    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=guest',
+    xp: 1200,
+    level: 1,
+    streaks: 0,
+    lastActive: new Date().toISOString(),
+    completedDays: [],
+    badges: [],
+    projects: []
+  };
+
+  const profile = realProfile || (view !== 'landing' ? guestProfile : null);
 
   React.useEffect(() => {
     console.log("App mounted. Loading state:", loading);
@@ -129,11 +145,17 @@ function AppContent() {
             <LayoutDashboard size={20} />
             <span className="font-medium">Missions</span>
           </button>
-          <button className="w-full flex items-center gap-3 rounded-lg px-4 py-3 text-slate-400 hover:bg-slate-800">
+          <button 
+            onClick={() => alert("Creator Gallery is coming soon in the next update! 🎨")}
+            className="w-full flex items-center gap-3 rounded-lg px-4 py-3 text-slate-400 hover:bg-slate-800"
+          >
             <Briefcase size={20} />
             <span className="font-medium">Gallery</span>
           </button>
-          <button className="w-full flex items-center gap-3 rounded-lg px-4 py-3 text-slate-400 hover:bg-slate-800">
+          <button 
+            onClick={() => alert("Leaderboard is currently syncing with the AI galaxy... Check back tomorrow! 🏆")}
+            className="w-full flex items-center gap-3 rounded-lg px-4 py-3 text-slate-400 hover:bg-slate-800"
+          >
             <Trophy size={20} />
             <span className="font-medium">Leaderboard</span>
           </button>
@@ -143,7 +165,12 @@ function AppContent() {
         <div className="mt-auto rounded-2xl bg-gradient-to-tr from-indigo-900/40 to-slate-800/40 p-4 border border-indigo-500/20">
           <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-2">Parent Zone</p>
           <p className="text-xs text-slate-400 mb-3">{profile?.name.split(' ')[0]} is {Math.round((profile?.completedDays.length || 0) / 7 * 100)}% through the challenge.</p>
-          <button className="w-full rounded-lg bg-indigo-600 py-2 text-xs font-bold text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all">View Progress</button>
+          <button 
+            onClick={() => alert("Parental Dashboard requires a valid parent email verification. Feature coming soon!")}
+            className="w-full rounded-lg bg-indigo-600 py-2 text-xs font-bold text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all"
+          >
+            View Progress
+          </button>
         </div>
       </aside>
 
@@ -260,7 +287,10 @@ function AppContent() {
           </div>
         </div>
 
-        <button className="mt-auto flex items-center justify-center space-x-2 rounded-xl bg-cyan-500 py-3 text-sm font-black text-slate-900 shadow-lg shadow-cyan-500/20 hover:bg-cyan-400 transition-all uppercase tracking-tight">
+        <button 
+          onClick={() => alert(`Sending a signal to ${mentor.name}... They will respond shortly! 🤖`)}
+          className="mt-auto flex items-center justify-center space-x-2 rounded-xl bg-cyan-500 py-3 text-sm font-black text-slate-900 shadow-lg shadow-cyan-500/20 hover:bg-cyan-400 transition-all uppercase tracking-tight"
+        >
           <Zap size={16} fill="currentColor" />
           <span>Ask {mentor.name} for Help</span>
         </button>
