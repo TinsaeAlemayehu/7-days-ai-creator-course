@@ -1,0 +1,13 @@
+{
+  "name": "7-Day AI Creator Challenge",
+  "description": "A magical, gamified learning adventure where kids (8-16) master the future of creation with AI. Build projects, earn badges, and graduate as an AI Creator.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "AI Learning",
+    "Project Building",
+    "Gamification"
+  ]
+}

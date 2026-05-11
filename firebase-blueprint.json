@@ -1,0 +1,28 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores kid creator profiles, progress, and rewards.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "xp": { "type": "integer" },
+        "level": { "type": "integer" },
+        "streaks": { "type": "integer" },
+        "lastActive": { "type": "string", "format": "date-time" },
+        "completedDays": { "type": "array", "items": { "type": "integer" } },
+        "badges": { "type": "array", "items": { "type": "string" } },
+        "projects": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["uid", "name", "xp", "level"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual user document containing all creator data."
+    }
+  }
+}

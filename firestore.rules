@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- User Validation ---
+    function isValidUser(data) {
+      return data.uid == request.auth.uid &&
+             data.name is string && data.name.size() <= 100 &&
+             data.avatar is string && data.avatar.size() <= 500 &&
+             data.xp is int && data.xp >= 0 &&
+             data.level is int && data.level >= 1 &&
+             data.streaks is int && data.streaks >= 0 &&
+             data.lastActive is string &&
+             data.completedDays is list && data.completedDays.size() <= 10 &&
+             data.badges is list && data.badges.size() <= 50 &&
+             data.projects is list && data.projects.size() <= 100;
+    }
+
+    // --- Collections ---
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      
+      allow create: if isOwner(userId) && 
+                      isValidUser(incoming()) && 
+                      // Identity Integrity & Exact Keys
+                      incoming().keys().hasAll(['uid', 'name', 'avatar', 'xp', 'level', 'streaks', 'lastActive', 'completedDays', 'badges', 'projects']) &&
+                      incoming().keys().size() == 10;
+
+      allow update: if isOwner(userId) && 
+                      isValidUser(incoming()) && (
+                        // Action: Progress Update
+                        (incoming().diff(existing()).affectedKeys().hasOnly(['xp', 'level', 'streaks', 'lastActive', 'completedDays', 'badges', 'projects']))
+                      ) &&
+                      // Identity Immortality
+                      incoming().uid == existing().uid;
+    }
+  }
+}
