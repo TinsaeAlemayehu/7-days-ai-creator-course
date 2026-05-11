@@ -1,6 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const getApiKey = () => {
+  // Try Vite's define replacement first
+  const key = process.env.GEMINI_API_KEY;
+  if (key && key !== "undefined") return key;
+  
+  // Fallback to import.meta.env (standard for many Vite deployments like Netlify)
+  return import.meta.env.VITE_GEMINI_API_KEY || "";
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export const getMentorResponse = async (mentorName: string, personality: string, message: string) => {
   const model = "gemini-3-flash-preview";
