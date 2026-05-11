@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-// @ts-ignore - This file is locally generated in AI Studio
+// @ts-ignore - This file is locally generated in AI Studio.
 import firebaseConfigJSON from '../../firebase-applet-config.json';
 
 const getFirebaseConfig = () => {
@@ -10,21 +10,35 @@ const getFirebaseConfig = () => {
     return firebaseConfigJSON;
   }
 
-  return {
+  const envConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
     storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
-    databaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID
+    firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID
   };
+
+  if (!envConfig.apiKey) {
+    console.warn("Firebase API Key is missing. App may not function correctly.");
+  }
+
+  return envConfig;
 };
 
 const firebaseConfig = getFirebaseConfig();
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || '(default)');
-export const auth = getAuth();
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (e) {
+  console.error("Firebase initialization failed:", e);
+  // Create a minimal fallback app structure
+  app = { name: '[DEFAULT]', options: {}, automaticDataCollectionEnabled: false };
+}
+
+export const db = getFirestore(app as any, firebaseConfig.firestoreDatabaseId || '(default)');
+export const auth = getAuth(app as any);
 
 export enum OperationType {
   CREATE = 'create',

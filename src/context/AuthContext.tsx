@@ -67,13 +67,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        await fetchProfile(u.uid);
-      } else {
-        setProfile(null);
+      try {
+        setUser(u);
+        if (u) {
+          await fetchProfile(u.uid);
+        } else {
+          setProfile(null);
+        }
+      } catch (error) {
+        console.error("Auth initialization error:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return unsubscribe;
   }, []);

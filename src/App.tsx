@@ -20,15 +20,46 @@ function AppContent() {
   const { user, profile, loading, refreshProfile } = useAuth();
   const [activeMission, setActiveMission] = useState<number | null>(null);
   const [view, setView] = useState<'landing' | 'map' | 'lesson' | 'lab' | 'parent'>('landing');
+  const [isTimedOut, setIsTimedOut] = useState(false);
+
+  React.useEffect(() => {
+    console.log("App mounted. Loading state:", loading);
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn("App is taking a long time to load. Check Firebase configuration and environment variables.");
+        setIsTimedOut(true);
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#020617] text-white">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#020617] text-white p-8">
         <div className="relative w-20 h-20 mb-6">
           <div className="absolute inset-0 border-4 border-slate-900 rounded-full" />
           <div className="absolute inset-0 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin" />
         </div>
         <p className="font-black text-xs uppercase tracking-[0.4em] animate-pulse">Initializing Portal...</p>
+        
+        {isTimedOut && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-12 p-6 rounded-2xl bg-red-500/10 border border-red-500/20 max-w-md text-center"
+          >
+            <p className="text-red-400 font-bold mb-4 italic text-sm">"This is taking longer than usual..."</p>
+            <p className="text-slate-400 text-xs leading-relaxed mb-6">
+              If you are seeing this on a deployed site (like Netlify), please ensure you have added your Firebase environment variables to your deployment settings.
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-black uppercase tracking-widest transition-all"
+            >
+              Reload Page
+            </button>
+          </motion.div>
+        )}
       </div>
     );
   }
